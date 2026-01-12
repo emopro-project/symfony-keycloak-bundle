@@ -1,0 +1,30 @@
+services: # Define the services/containers to be run
+  api-getway:
+    container_name: keycloak-bundle
+    build:
+      context: .
+    restart: unless-stopped
+    networks:
+      - shared-network
+    # depends_on:
+    #   - postgresql
+    environment:
+      - APP_ENV=dev  # Set your application environment here
+      - DATABASE_URL=postgresql://app:!ChangeMe!@database:5432/app_classbridgedb
+      - JWT_SECRET_KEY=%kernel.project_dir%/config/jwt/private.key
+      - JWT_PUBLIC_KEY=%kernel.project_dir%/config/jwt/public.key
+      - JWT_PASSPHRASE=902aec897e0c66f8031d25d38e1c9377661cde4df49fdc3204f83998beb7cda6
+      - MAILER_DSN=smtp://smtp4dev:25
+      - MESSENGER_TRANSPORT_DSN=amqp://guest:guest@rabbitmq:5672/%2f/messages
+      - KEYCLOAK_URI=http://keycloak:8080
+      - KEYCLOAK_REALM=classbridge
+      - KEYCLOAK_CLIENT_ID=classbridge-backend
+      - KEYCLOAK_CLIENT_SECRET=QXXNwe4EXGen7FbTZyxm4ggwjBmDn6Jt
+      #- KEYCLOAK_PUBLIC_KEY="MIICpTCCAY0CBgGUitNCtTANBgkqhkiG9w0BAQsFADAWMRQwEgYDVQQDDAtjbGFzc2JyaWRnZTAeFw0yNTAxMjEyMTQzMDhaFw0zNTAxMjEyMTQ0NDhaMBYxFDASBgNVBAMMC2NsYXNzYnJpZGdlMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyb/Z2Cbts+goyL7BHM9L/CjBANRBdr3m8UtXsOV0/rawYdvHTE9XDWgvWBay3DE7GfdK80jWgI4bobN6TtLxAYLABpFKrtQ/QA61mXRwKSoYW65oW5Obpcu06QUZlRPoYPGiCQQ78WLQYltgsl6/LDPYrFmhMRpt7rcVbGuM8s7wZOaj34MV6/eWOnHnLgtt9phl2TF25ejAiT3nToC7SmuxF+NS1zSFDfcV/w3vzfEqFKQzL1mxe63lffLg1AcEeD/N+wG6srsdOAYSBfGBsRvReHr0+OlTIZsXv5yKmwkF6asqgMkxWbI7uPJESzZwIOiumTW3SzZp8HFlRdu5NwIDAQABMA0GCSqGSIb3DQEBCwUAA4IBAQAPXZfowyBL3EYOJ2Ubeh+4+MHhng3xZgZeFiRdOtIooVpJcP0i2WvSOvtDV1JJYLfasn+LVTi9H64yadqnkASqaMj+mGibrfVl4dL/0RYSI4OaBfiVfVKJGC+cK5rsht1ogFe2spquSCdvME1z4eLBUY4YDB/D8JDiAOAAnBfcguCMZTpDT71qEEwAF5dSVrWTg60/yblYJtDabqjg44++rBAj5dyAS4WomupJmgY16zVp98Q/yDhkZQJzrjSfkW8d2GBnbypMYxgKnsUMEcjvUWNItfAx9L0AuKnMpq9Lm1DpTy/LelIL1AXI1gyUlhUFovx5EK1ra9oaXXWz9L8/"
+    volumes:
+      - .:/var/www/html
+    ports:
+      - "8086:80"
+networks:
+  shared-network:
+    external: true
