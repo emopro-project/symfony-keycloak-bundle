@@ -1,5 +1,5 @@
 {
-    "name": "polla/keycloak-bundle",
+    "name": "keycloak-contrib/symfony-keycloak-bundle",
     "type": "symfony-bundle",
     "version": "1.0.0",
     "license": "MIT",
