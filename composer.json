@@ -1,7 +1,7 @@
 {
     "name": "keycloak-auth/symfony-bundle",
     "type": "symfony-bundle",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "license": "MIT",
     "description": "Modern symfony bundle for Keycloak authentication",
     "minimum-stability": "stable",
