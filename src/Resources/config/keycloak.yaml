@@ -1,0 +1,5 @@
+# Default configuration for KeycloakBundle
+keycloak:
+  realm: null
+  client_id: null
+  base_url: 'https://keycloak.example.com/'

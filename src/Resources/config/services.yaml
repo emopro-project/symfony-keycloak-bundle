@@ -1,0 +1,25 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: public
+
+  Vendor\SymfonyKeycloakBundle\:
+    resource: "../../"
+    exclude:
+      - "../../DependencyInjection"
+      - "../../Resources"
+
+  # Port → Adapter (hexagonal)
+  Vendor\SymfonyKeycloakBundle\Domain\Port\JwksProviderInterface:
+    alias: Vendor\SymfonyKeycloakBundle\Infrastructure\Keycloak\JwksProvider
+
+  Vendor\SymfonyKeycloakBundle\Infrastructure\Keycloak\JwksProvider:
+    arguments:
+      $httpClient: "@http_client"
+
+  "@keycloak_authenticator":
+    alias: Vendor\SymfonyKeycloakBundle\Infrastructure\Symfony\Security\KeycloakAuthenticator
+  Vendor\SymfonyKeycloakBundle\Infrastructure\Symfony\Security\KeycloakAuthenticator:
+    tags:
+      - { name: "security.authenticator" }
