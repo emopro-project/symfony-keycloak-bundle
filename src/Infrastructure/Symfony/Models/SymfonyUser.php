@@ -1,6 +1,6 @@
 <?php
 
-namespace Vendor\SymfonyKeycloakBundle\Infrastructure\Symfony\Security;
+namespace Vendor\SymfonyKeycloakBundle\Infrastructure\Symfony\Models;
 
 use Symfony\Component\Security\Core\User\UserInterface;
 use Vendor\SymfonyKeycloakBundle\Domain\Model\AuthenticatedUser;

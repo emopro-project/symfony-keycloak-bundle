@@ -1,0 +1,3 @@
+keycloak_login_check:
+  path: /login/check
+  controller: Vendor\SymfonyKeycloakBundle\Infrastructure\Symfony\Controller\LoginController::check

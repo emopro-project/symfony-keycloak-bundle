@@ -33,4 +33,13 @@ class AuthenticatedUser
     {
         return in_array($role, $this->roles, true);
     }
+
+    public function toArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'username' => $this->username,
+            'roles' => $this->roles,
+        ];
+    }
 }

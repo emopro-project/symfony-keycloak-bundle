@@ -9,17 +9,56 @@ services:
     exclude:
       - "../../DependencyInjection"
       - "../../Resources"
+      - "../../Domain/Model"
+      - "../../Infrastructure/Symfony/Models"
 
   # Port → Adapter (hexagonal)
   Vendor\SymfonyKeycloakBundle\Domain\Port\JwksProviderInterface:
     alias: Vendor\SymfonyKeycloakBundle\Infrastructure\Keycloak\JwksProvider
 
+
+  Vendor\SymfonyKeycloakBundle\Domain\Port\TokenExchangerInterface:
+    alias: Vendor\SymfonyKeycloakBundle\Infrastructure\Keycloak\TokenExchanger
+
   Vendor\SymfonyKeycloakBundle\Infrastructure\Keycloak\JwksProvider:
     arguments:
       $httpClient: "@http_client"
+      $jwksUrl: "%keycloak.jwks_url%"
+  
+  # UseCase service
+  Vendor\SymfonyKeycloakBundle\Application\UseCase\AuthenticateUser: ~
 
   "@keycloak_authenticator":
     alias: Vendor\SymfonyKeycloakBundle\Infrastructure\Symfony\Security\KeycloakAuthenticator
+  "@Symfony_user_provider":
+    alias: Vendor\SymfonyKeycloakBundle\Infrastructure\Symfony\Provider\SymfonyUserProvider
+
+  # Authenticator service
   Vendor\SymfonyKeycloakBundle\Infrastructure\Symfony\Security\KeycloakAuthenticator:
+    arguments:
+      $authenticateUser: '@Vendor\SymfonyKeycloakBundle\Application\UseCase\AuthenticateUser'
     tags:
       - { name: "security.authenticator" }
+
+  Vendor\SymfonyKeycloakBundle\Infrastructure\Keycloak\LoginUrlGenerator:
+    arguments:
+      $baseUrl: "%keycloak.base_url%"
+      $realm: "%keycloak.realm%"
+      $clientId: "%keycloak.client_id%"
+      $redirectUri: "%keycloak.redirect_uri%"
+  
+  Vendor\SymfonyKeycloakBundle\Infrastructure\Keycloak\KeycloakEndpoints:
+    arguments:
+      $baseUrl: "%keycloak.base_url%"
+      $realm: "%keycloak.realm%"
+  
+  Vendor\SymfonyKeycloakBundle\Infrastructure\Keycloak\TokenExchanger:
+    arguments:
+      $clientId: "%keycloak.client_id%"
+      $redirectUri: "%keycloak.redirect_uri%"
+      $clientSecret: "%keycloak.client_secret%"
+  
+  Vendor\SymfonyKeycloakBundle\Infrastructure\Keycloak\ClientCredentialsTokenProvider:
+    arguments:
+        $clientId: "%keycloak.client_id%"
+        $clientSecret: "%keycloak.client_secret%"

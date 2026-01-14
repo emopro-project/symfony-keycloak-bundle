@@ -1,5 +1,8 @@
-# Default configuration for KeycloakBundle
 keycloak:
-  realm: null
-  client_id: null
-  base_url: 'https://keycloak.example.com/'
+  realm: '%env(KEYCLOAK_REALM)%'
+  client_id: '%env(KEYCLOAK_CLIENT_ID)%'
+  base_uri: '%env(KEYCLOAK_URI)%'
+
+
+          
+        

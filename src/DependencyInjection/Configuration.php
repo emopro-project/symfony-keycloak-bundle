@@ -18,6 +18,8 @@ final class Configuration implements ConfigurationInterface
                 ->scalarNode('realm')->isRequired()->end()
                 ->scalarNode('client_id')->isRequired()->end()
                 ->scalarNode('base_url')->isRequired()->end()
+                ->scalarNode('client_secret')->isRequired()->end()
+                ->scalarNode('redirect_uri')->isRequired()->end()
             ->end();
 
         return $treeBuilder;

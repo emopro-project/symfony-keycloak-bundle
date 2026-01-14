@@ -19,26 +19,73 @@ class TokenValidator implements TokenValidatorInterface
         // Initialize any required dependencies here
     }
 
-    public function validate(string $token): AuthenticatedUser
+    public function validate(string $jwt): AuthenticatedUser
     {
-        // Implémentation de la validation du token Keycloak.
-        try {
-            // Décodez le jeton JWT
-            $jwks = $this->jwksProvider->getJwks();
-            $headers = new stdClass();
-            $data = JWT::decode($token, new Key($jwks, 'HS256'), $headers);
-        } catch (\Symfony\Component\Security\Core\Exception\AuthenticationException $e) {
-            throw new AuthenticationException($e->getMessage());
+
+        $header = $this->decodeHeader($jwt);
+        $alg = $header->alg;
+
+        
+
+        $jwks = $this->jwksProvider->getJwks();
+
+        $keyData = $this->jwksProvider->findKeyByKid($jwks, $header->kid);
+        if (!$keyData) {
+            throw new AuthenticationException('Clé JWT introuvable pour le kid donné.');
         }
 
-        $roles = isset($data['realm_access']['roles']) ? $data['realm_access']['roles'] : [];
-        $username = $data['preferred_username'];
-        $email = $data['email'];
-        return new AuthenticatedUser("", $username, $roles);
+        $publicKeyPem = $this->jwksProvider->certToPem($keyData->x5c[0]);
+
+        try {
+            $decoded = JWT::decode($jwt, new Key($publicKeyPem, $alg));
+            $mapUser = $this->mapJwtToUser($decoded);
+            
+            return $mapUser;
+        } catch (\Throwable $e) {
+            throw new AuthenticationException('JWT invalide : ' . $e->getMessage());
+        }
     }
 
     public function formatToken(string $token): string
     {
         return trim(preg_replace('/^(?:\s+)?[B-b]earer\s/', '', $token));
+    }
+
+
+
+    private function decodeHeader(string $jwt): object
+    {
+        $parts = explode('.', $jwt);
+        if (count($parts) < 2) {
+            throw new AuthenticationException('JWT malformé');
+        }
+
+        $decodedHeaderJson = base64_decode(strtr($parts[0], '-_', '+/'));
+        $header = json_decode($decodedHeaderJson);
+
+        if (!$header || !isset($header->alg)) {
+            throw new AuthenticationException('Impossible de décoder l’en-tête JWT ou algorithme manquant');
+        }
+
+        return $header;
+    }
+
+
+
+    private function mapJwtToUser(\stdClass $decoded): AuthenticatedUser
+    {
+        $id = $decoded->sub ?? '';
+        $username = $decoded->preferred_username ?? '';
+        $roles = $decoded->realm_access->roles ?? [];
+        // Fusionner les rôles des clients si nécessaire
+        if (isset($decoded->resource_access)) {
+            foreach ($decoded->resource_access as $client) {
+                $roles = array_merge($roles, $client->roles ?? []);
+            }
+        }
+        $roles = array_unique(array_map(fn($r) => "ROLE_" . strtoupper($r), $roles));
+        $roles[] = 'ROLE_USER';
+
+        return new AuthenticatedUser($id, $username, $roles);
     }
 }
