@@ -5,19 +5,31 @@ security:
     # https://symfony.com/doc/current/security.html#loading-the-user-the-user-provider
     providers:
         users_in_memory: { memory: null }
+       
+        keycloak_provider:
+            id: "@Symfony_user_provider"
+
     firewalls:
-        dev:
-            pattern: ^/(_(profiler|wdt)|css|images|js)/
-            security: false
+
         main:
+            pattern: ^/
             lazy: true
-            provider: users_in_memory
+            provider: keycloak_provider
+            stateless: false   # ⚠ important pour page web
+            custom_authenticators:
+                - '@keycloak_authenticator'
+            entry_point: '@keycloak_authenticator' # when a lohin user come, redirect let keycloak manage that. web, redirection
+
         api:
-           pattern: ^/api
-           stateless: true
-           custom_authenticators:
-            - Vendor\SymfonyKeycloakBundle\Infrastructure\Symfony\KeycloakAuthenticator
-        
+            pattern: ^/api
+            provider: users_in_memory
+            stateless: true   # ⚡ API token only # PAS de redirection, 401 si pas de jeton
+            custom_authenticators:
+                - '@keycloak_authenticator'
+
+
+
+
 
             # activate different ways to authenticate
             # https://symfony.com/doc/current/security.html#the-firewall
@@ -30,6 +42,8 @@ security:
     access_control:
         # - { path: ^/admin, roles: ROLE_ADMIN }
         # - { path: ^/profile, roles: ROLE_USER }
+        - { path: ^/$, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
 
 when@test:
     security:
