@@ -1,14 +1,14 @@
 <?php
 
-namespace Vendor\SymfonyKeycloakBundle\Tests\Infrastructure\Symfony\Security;
+namespace KeycloakAuthBundle\Tests\Infrastructure\Symfony\Security;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request as HttpFoundationRequest;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Security\Http\Authenticator\Passport\SelfValidatingPassport;
-use Vendor\SymfonyKeycloakBundle\Application\UseCase\AuthenticateUser;
-use Vendor\SymfonyKeycloakBundle\Domain\Model\AuthenticatedUser as User;
-use Vendor\SymfonyKeycloakBundle\Infrastructure\Symfony\Security\KeycloakAuthenticator;
+use KeycloakAuthBundle\Application\UseCase\AuthenticateUser;
+use KeycloakAuthBundle\Domain\Model\AuthenticatedUser as User;
+use KeycloakAuthBundle\Infrastructure\Symfony\Security\KeycloakAuthenticator;
 
 class KeycloakAuthenticatorTest extends TestCase
 {

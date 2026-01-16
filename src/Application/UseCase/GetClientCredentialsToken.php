@@ -1,8 +1,8 @@
 <?php
 
-namespace Vendor\SymfonyKeycloakBundle\Application\UseCase;
+namespace KeycloakAuthBundle\Application\UseCase;
 
-use Vendor\SymfonyKeycloakBundle\Domain\Port\ClientCredentialsTokenProviderInterface;
+use KeycloakAuthBundle\Domain\Port\ClientCredentialsTokenProviderInterface;
 
 final class GetClientCredentialsToken
 {

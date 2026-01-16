@@ -1,11 +1,11 @@
 <?php
 
-namespace Vendor\SymfonyKeycloakBundle\Application\UseCase;
+namespace KeycloakAuthBundle\Application\UseCase;
 
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
-use Vendor\SymfonyKeycloakBundle\Domain\Model\AuthenticatedUser;
-use Vendor\SymfonyKeycloakBundle\Domain\Port\TokenExchangerInterface;
-use Vendor\SymfonyKeycloakBundle\Domain\Port\TokenValidatorInterface;
+use KeycloakAuthBundle\Domain\Model\AuthenticatedUser;
+use KeycloakAuthBundle\Domain\Port\TokenExchangerInterface;
+use KeycloakAuthBundle\Domain\Port\TokenValidatorInterface;
 
 class AuthenticateUser
 {
@@ -27,6 +27,7 @@ class AuthenticateUser
 
     public function exchangeCodeForToken(string $code): string
     {
+        
         $data = $this->tokenExchangerInterface->exchange($code);
 
         if (!isset($data['access_token'])) {

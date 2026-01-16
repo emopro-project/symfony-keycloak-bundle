@@ -2,6 +2,9 @@ keycloak:
   realm: '%env(KEYCLOAK_REALM)%'
   client_id: '%env(KEYCLOAK_CLIENT_ID)%'
   base_uri: '%env(KEYCLOAK_URI)%'
+  health:
+    enabled: true
+    path: /keycloak/health
 
 
           

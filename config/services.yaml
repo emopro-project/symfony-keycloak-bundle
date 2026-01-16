@@ -19,19 +19,19 @@ services:
       - "../src/DependencyInjection/"
       - "../src/Entity/"
       - "../src/Kernel.php"
-  Vendor\SymfonyKeycloakBundle: #Instanciate all adaptators.
-    resource: '../src/'
+  KeycloakAuthBundle: #Instanciate all adaptators.
+    resource: "../src/"
   # quand tu demandes JwksHttpProviderInterface tu as JwksHttpProvider qui est injecté
-  Vendor\SymfonyKeycloakBundle\Domain\Port\JwksProviderInterface:
-    alias: Vendor\SymfonyKeycloakBundle\Infrastructure\Keycloak\JwksProvider
+  KeycloakAuthBundle\Domain\Port\JwksProviderInterface:
+    alias: KeycloakAuthBundle\Infrastructure\Keycloak\JwksProvider
 
-  Vendor\SymfonyKeycloakBundle\Infrastructure\Keycloak\JwksHttpProvider:
+  KeycloakAuthBundle\Infrastructure\Keycloak\JwksHttpProvider:
     arguments:
       $httpClient: "@http_client"
 
-  Vendor\SymfonyKeycloakBundle\Security\JwksProvider:
+  KeycloakAuthBundle\Security\JwksProvider:
   arguments:
-    $jwksUrl: '%keycloak.jwks_url%'
+    $jwksUrl: "%keycloak.jwks_url%"
 
   # add more service definitions when explicit configuration is needed
   # please note that last definitions always *replace* previous ones

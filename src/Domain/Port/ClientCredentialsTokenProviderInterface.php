@@ -1,6 +1,6 @@
 <?php
 
-namespace Vendor\SymfonyKeycloakBundle\Domain\Port;
+namespace KeycloakAuthBundle\Domain\Port;
 
 interface ClientCredentialsTokenProviderInterface
 {

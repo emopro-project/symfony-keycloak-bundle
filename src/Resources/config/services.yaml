@@ -4,61 +4,93 @@ services:
     autoconfigure: true
     public: public
 
-  Vendor\SymfonyKeycloakBundle\:
+  KeycloakAuthBundle\:
     resource: "../../"
     exclude:
-      - "../../DependencyInjection"
-      - "../../Resources"
+      - "../../{DependencyInjection, Resources}"
       - "../../Domain/Model"
       - "../../Infrastructure/Symfony/Models"
 
   # Port → Adapter (hexagonal)
-  Vendor\SymfonyKeycloakBundle\Domain\Port\JwksProviderInterface:
-    alias: Vendor\SymfonyKeycloakBundle\Infrastructure\Keycloak\JwksProvider
+  KeycloakAuthBundle\Domain\Port\JwksProviderInterface:
+    alias: KeycloakAuthBundle\Infrastructure\Keycloak\JwksProvider
 
+  KeycloakAuthBundle\Domain\Port\TokenExchangerInterface:
+    alias: KeycloakAuthBundle\Infrastructure\Keycloak\TokenExchanger
 
-  Vendor\SymfonyKeycloakBundle\Domain\Port\TokenExchangerInterface:
-    alias: Vendor\SymfonyKeycloakBundle\Infrastructure\Keycloak\TokenExchanger
-
-  Vendor\SymfonyKeycloakBundle\Infrastructure\Keycloak\JwksProvider:
+  KeycloakAuthBundle\Infrastructure\Keycloak\JwksProvider:
     arguments:
       $httpClient: "@http_client"
       $jwksUrl: "%keycloak.jwks_url%"
-  
+
   # UseCase service
-  Vendor\SymfonyKeycloakBundle\Application\UseCase\AuthenticateUser: ~
+  KeycloakAuthBundle\Application\UseCase\AuthenticateUser: ~
 
   "@keycloak_authenticator":
-    alias: Vendor\SymfonyKeycloakBundle\Infrastructure\Symfony\Security\KeycloakAuthenticator
+    alias: KeycloakAuthBundle\Infrastructure\Symfony\Security\KeycloakAuthenticator
   "@Symfony_user_provider":
-    alias: Vendor\SymfonyKeycloakBundle\Infrastructure\Symfony\Provider\SymfonyUserProvider
+    alias: KeycloakAuthBundle\Infrastructure\Symfony\Provider\SymfonyUserProvider
 
   # Authenticator service
-  Vendor\SymfonyKeycloakBundle\Infrastructure\Symfony\Security\KeycloakAuthenticator:
+  KeycloakAuthBundle\Infrastructure\Symfony\Security\KeycloakAuthenticator:
     arguments:
-      $authenticateUser: '@Vendor\SymfonyKeycloakBundle\Application\UseCase\AuthenticateUser'
+      $authenticateUser: '@KeycloakAuthBundle\Application\UseCase\AuthenticateUser'
     tags:
       - { name: "security.authenticator" }
 
-  Vendor\SymfonyKeycloakBundle\Infrastructure\Keycloak\LoginUrlGenerator:
+  KeycloakAuthBundle\Infrastructure\Keycloak\LoginUrlGenerator:
     arguments:
       $baseUrl: "%keycloak.base_url%"
       $realm: "%keycloak.realm%"
       $clientId: "%keycloak.client_id%"
       $redirectUri: "%keycloak.redirect_uri%"
-  
-  Vendor\SymfonyKeycloakBundle\Infrastructure\Keycloak\KeycloakEndpoints:
+
+  KeycloakAuthBundle\Infrastructure\Keycloak\KeycloakEndpoints:
     arguments:
       $baseUrl: "%keycloak.base_url%"
       $realm: "%keycloak.realm%"
-  
-  Vendor\SymfonyKeycloakBundle\Infrastructure\Keycloak\TokenExchanger:
+
+  KeycloakAuthBundle\Infrastructure\Keycloak\TokenExchanger:
     arguments:
       $clientId: "%keycloak.client_id%"
       $redirectUri: "%keycloak.redirect_uri%"
       $clientSecret: "%keycloak.client_secret%"
-  
-  Vendor\SymfonyKeycloakBundle\Infrastructure\Keycloak\ClientCredentialsTokenProvider:
+
+  KeycloakAuthBundle\Infrastructure\Keycloak\ClientCredentialsTokenProvider:
     arguments:
-        $clientId: "%keycloak.client_id%"
-        $clientSecret: "%keycloak.client_secret%"
+      $clientId: "%keycloak.client_id%"
+      $clientSecret: "%keycloak.client_secret%"
+
+  KeycloakAuthBundle\Infrastructure\Keycloak\IssuerChecker:
+    arguments:
+      $baseUrl: "%keycloak.base_url%"
+      $realm: "%keycloak.realm%"
+
+  KeycloakAuthBundle\Domain\Port\HealthCheckInterface:
+    alias: KeycloakAuthBundle\Infrastructure\Keycloak\KeyCloackHealthChecker
+
+
+  KeycloakAuthBundle\Infrastructure\Keycloak\Jwt\LcobucciJwtValidator:
+    arguments:
+        $jwtConfig: '@Lcobucci\JWT\Configuration' # ou ton service Configuration
+        $jwksProvider: '@KeycloakAuthBundle\Infrastructure\Keycloak\JwksProvider'
+        $roleMapper  : '@KeycloakAuthBundle\Infrastructure\Keycloak\RoleMapper'
+        $issuer      : "%keycloak.issuer%"
+
+  KeycloakAuthBundle\Domain\Port\RoleMapperInterface:
+    alias: KeycloakAuthBundle\Infrastructure\Keycloak\RoleMapper
+
+
+ # Keys (placeholder, la vraie clé vient du JWKS)
+  Lcobucci\JWT\Signer\Key\InMemory:
+    factory: ['Lcobucci\JWT\Signer\Key\InMemory', 'empty']
+
+  Lcobucci\JWT\Signer\Rsa\Sha256:
+    class: Lcobucci\JWT\Signer\Rsa\Sha256
+ 
+  Lcobucci\JWT\Configuration:
+    factory: ['Lcobucci\JWT\Configuration', 'forAsymmetricSigner']
+    arguments:
+      - '@Lcobucci\JWT\Signer\Rsa\Sha256'
+      - '@Lcobucci\JWT\Signer\Key\InMemory'
+      - '@Lcobucci\JWT\Signer\Key\InMemory'

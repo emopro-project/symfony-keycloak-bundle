@@ -1,11 +1,11 @@
 <?php
 
-namespace Vendor\SymfonyKeycloakBundle\Infrastructure\Symfony\Provider;
+namespace KeycloakAuthBundle\Infrastructure\Symfony\Provider;
 
 use Symfony\Component\Security\Core\Exception\UserNotFoundException;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
-use Vendor\SymfonyKeycloakBundle\Infrastructure\Symfony\Models\SymfonyUser;
+use KeycloakAuthBundle\Infrastructure\Symfony\Models\SymfonyUser;
 
 final class SymfonyUserProvider implements UserProviderInterface
 {

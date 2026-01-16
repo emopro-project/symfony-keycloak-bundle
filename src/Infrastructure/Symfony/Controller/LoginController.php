@@ -1,6 +1,6 @@
 <?php
 
-namespace Vendor\SymfonyKeycloakBundle\Infrastructure\Symfony\Controller;
+namespace KeycloakAuthBundle\Infrastructure\Symfony\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
@@ -19,4 +19,3 @@ class LoginController extends AbstractController
         return new Response('Keycloak login check');
     }
 }
-

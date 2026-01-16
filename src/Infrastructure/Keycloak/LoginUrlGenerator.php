@@ -1,5 +1,6 @@
 <?php
-namespace Vendor\SymfonyKeycloakBundle\Infrastructure\Keycloak;
+
+namespace KeycloakAuthBundle\Infrastructure\Keycloak;
 
 use Symfony\Component\HttpFoundation\RequestStack;
 

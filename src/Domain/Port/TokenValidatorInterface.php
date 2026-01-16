@@ -1,8 +1,8 @@
 <?php
 
-namespace Vendor\SymfonyKeycloakBundle\Domain\Port;
+namespace KeycloakAuthBundle\Domain\Port;
 
-use Vendor\SymfonyKeycloakBundle\Domain\Model\AuthenticatedUser;
+use KeycloakAuthBundle\Domain\Model\AuthenticatedUser;
 
 interface TokenValidatorInterface
 {

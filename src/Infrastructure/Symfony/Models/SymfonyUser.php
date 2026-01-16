@@ -1,9 +1,9 @@
 <?php
 
-namespace Vendor\SymfonyKeycloakBundle\Infrastructure\Symfony\Models;
+namespace KeycloakAuthBundle\Infrastructure\Symfony\Models;
 
 use Symfony\Component\Security\Core\User\UserInterface;
-use Vendor\SymfonyKeycloakBundle\Domain\Model\AuthenticatedUser;
+use KeycloakAuthBundle\Domain\Model\AuthenticatedUser;
 
 final class SymfonyUser implements UserInterface
 {

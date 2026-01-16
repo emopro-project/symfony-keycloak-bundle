@@ -1,11 +1,11 @@
 <?php
 
-namespace Vendor\SymfonyKeycloakBundle;
+namespace KeycloakAuthBundle;
 
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 use Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator;
 
-final class KeycloakBundle extends Bundle
+final class KeycloakAuthBundle extends Bundle
 {
 
 

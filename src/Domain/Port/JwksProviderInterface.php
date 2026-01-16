@@ -1,6 +1,8 @@
 <?php
 
-namespace Vendor\SymfonyKeycloakBundle\Domain\Port;
+namespace KeycloakAuthBundle\Domain\Port;
+
+use Lcobucci\JWT\Signer\Key\InMemory;
 
 interface JwksProviderInterface
 {

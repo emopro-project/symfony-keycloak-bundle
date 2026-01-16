@@ -1,10 +1,9 @@
 <?php
 
-namespace Vendor\SymfonyKeycloakBundle\Infrastructure\Keycloak;
+namespace KeycloakAuthBundle\Infrastructure\Keycloak;
 
-use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
-use Vendor\SymfonyKeycloakBundle\Domain\Port\JwksProviderInterface;
+use KeycloakAuthBundle\Domain\Port\JwksProviderInterface;
 
 final class JwksProvider implements JwksProviderInterface
 {
@@ -15,14 +14,26 @@ final class JwksProvider implements JwksProviderInterface
     ) {}
 
 
-    public  function getJwks(): object
+    public function getJwks(): object
     {
-        $response = $this->httpClient->request('GET', $this->jwksUrl);
-        if (200 !== $response->getStatusCode()) {
-            throw new AuthenticationException('Impossible de récupérer le JWKS');
-        }
+        try {
+            $response = $this->httpClient->request('GET', $this->jwksUrl);
 
-        return json_decode($response->getContent());
+            if (200 !== $response->getStatusCode()) {
+                throw new \RuntimeException('Impossible de récupérer le JWKS, statut HTTP: ' . $response->getStatusCode());
+            }
+
+            $jwks = json_decode($response->getContent());
+
+            if (null === $jwks) {
+                throw new \RuntimeException('Impossible de décoder le JWKS JSON: ' . json_last_error_msg());
+            }
+
+            return $jwks;
+        } catch (\Throwable $e) {
+            // Ici tu peux logger l'erreur si nécessaire
+            throw new \RuntimeException('Erreur lors de la récupération du JWKS: ' . $e->getMessage(), 0, $e);
+        }
     }
 
     public function findKeyByKid(object $jwks, string $kid): ?object
@@ -45,7 +56,4 @@ final class JwksProvider implements JwksProviderInterface
         $pem = "-----BEGIN CERTIFICATE-----\n" . $cert . "-----END CERTIFICATE-----\n";
         return $pem;
     }
-
-
-    
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace  Vendor\SymfonyKeycloakBundle\Infrastructure\Symfony\Security;
+namespace  KeycloakAuthBundle\Infrastructure\Symfony\Security;
 
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -11,11 +11,11 @@ use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Http\Authenticator\AbstractAuthenticator;
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
 use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
-use Vendor\SymfonyKeycloakBundle\Application\UseCase\AuthenticateUser;
+use KeycloakAuthBundle\Application\UseCase\AuthenticateUser;
 use Symfony\Component\Security\Http\Authenticator\Passport\SelfValidatingPassport;
 use Symfony\Component\Security\Http\EntryPoint\AuthenticationEntryPointInterface;
-use Vendor\SymfonyKeycloakBundle\Infrastructure\Keycloak\LoginUrlGenerator;
-use Vendor\SymfonyKeycloakBundle\Infrastructure\Symfony\Models\SymfonyUser;
+use KeycloakAuthBundle\Infrastructure\Keycloak\LoginUrlGenerator;
+use KeycloakAuthBundle\Infrastructure\Symfony\Models\SymfonyUser;
 
 class KeycloakAuthenticator extends AbstractAuthenticator implements AuthenticationEntryPointInterface
 {
@@ -36,6 +36,7 @@ class KeycloakAuthenticator extends AbstractAuthenticator implements Authenticat
     public function authenticate(Request $request): Passport
     {
 
+    
         $session = $request->getSession();
         if ($session && $session->has('keycloak_access_token')) {
             $accessToken = $session->get('keycloak_access_token');
@@ -51,10 +52,11 @@ class KeycloakAuthenticator extends AbstractAuthenticator implements Authenticat
             );
         }
 
-
+        
         if ($request->query->has('code')) {
             return $this->authenticateWithCode($request);
         }
+
 
         return $this->authenticateWithBearerToken($request);
     }
@@ -70,7 +72,6 @@ class KeycloakAuthenticator extends AbstractAuthenticator implements Authenticat
 
         $accessToken = $this->authenticateUser->exchangeCodeForToken($code);
 
-        // 🔐 validation JWT
         $domainUser = $this->authenticateUser->execute($accessToken);
 
         $symfonyUser = new SymfonyUser($domainUser);
@@ -109,7 +110,7 @@ class KeycloakAuthenticator extends AbstractAuthenticator implements Authenticat
     public function supports(Request $request): bool
     {
 
-
+   
         $isLoginCheckRoute = $request->attributes->get('_route') === 'keycloak_login_check';
         $hasAuthHeader = $request->headers->has('Authorization');
 

@@ -1,9 +1,9 @@
 <?php
 
-namespace Vendor\SymfonyKeycloakBundle\Tests\Domain\Model;
+namespace KeycloakAuthBundle\Tests\Domain\Model;
 
 use PHPUnit\Framework\TestCase;
-use Vendor\SymfonyKeycloakBundle\Domain\Model\AuthenticatedUser;
+use KeycloakAuthBundle\Domain\Model\AuthenticatedUser;
 
 class AuthenticatedUserTest extends TestCase
 {

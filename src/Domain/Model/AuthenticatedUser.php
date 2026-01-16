@@ -1,6 +1,6 @@
 <?php
 
-namespace Vendor\SymfonyKeycloakBundle\Domain\Model;
+namespace KeycloakAuthBundle\Domain\Model;
 
 class AuthenticatedUser
 {

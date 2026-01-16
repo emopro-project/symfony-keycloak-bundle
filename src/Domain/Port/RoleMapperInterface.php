@@ -1,8 +1,8 @@
 <?php
 
-namespace Vendor\SymfonyKeycloakBundle\Domain\Port;
+namespace KeycloakAuthBundle\Domain\Port;
 
 interface RoleMapperInterface
 {
-    public function map(array $keycloakRoles): array;
+   public function map(array|object $realmRessourcesAccess, array $realmAccessRoles): array;
 }

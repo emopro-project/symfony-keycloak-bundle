@@ -1,3 +1,4 @@
-keycloak_login_check:
-  path: /login/check
-  controller: Vendor\SymfonyKeycloakBundle\Infrastructure\Symfony\Controller\LoginController::check
+keycloak_health:
+  resource: '../../Infrastructure/Symfony/Controller/KeycloakHealthController.php'
+  type: attribute
+  condition: "%keycloak.health.enabled%"
