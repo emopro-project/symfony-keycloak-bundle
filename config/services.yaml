@@ -33,5 +33,10 @@ services:
   arguments:
     $jwksUrl: "%keycloak.jwks_url%"
 
+
+  # KeycloakAuthBundle\Infrastructure\Symfony\RateLimiter\RateLimitAdpter:
+  #   arguments:
+  #     $factory: '@keycloak.rate_limiter.factory'
+
   # add more service definitions when explicit configuration is needed
   # please note that last definitions always *replace* previous ones

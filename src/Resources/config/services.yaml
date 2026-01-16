@@ -81,7 +81,7 @@ services:
     alias: KeycloakAuthBundle\Infrastructure\Keycloak\RoleMapper
 
 
- # Keys (placeholder, la vraie clé vient du JWKS)
+ # JWT and security authenticator
   Lcobucci\JWT\Signer\Key\InMemory:
     factory: ['Lcobucci\JWT\Signer\Key\InMemory', 'empty']
 
@@ -94,3 +94,16 @@ services:
       - '@Lcobucci\JWT\Signer\Rsa\Sha256'
       - '@Lcobucci\JWT\Signer\Key\InMemory'
       - '@Lcobucci\JWT\Signer\Key\InMemory'
+  
+  # Resolver
+  KeycloakAuthBundle\Domain\Port\RateLimitKeyResolverInterface:
+    alias: KeycloakAuthBundle\Infrastructure\Symfony\RateLimiter\RateLimitHttpResolverAdapter 
+  
+  KeycloakAuthBundle\Domain\Port\RateLimiterCheckerInterface:
+    alias: KeycloakAuthBundle\Infrastructure\Symfony\RateLimiter\RateLimitAdpter
+
+  KeycloakAuthBundle\Infrastructure\Symfony\RateLimiter\RateLimitAdpter:
+    arguments:
+      $factory:
+        class: Symfony\Component\RateLimiter\RateLimiterFactory
+        factory: ['Symfony\Component\RateLimiter\RateLimiterFactory', 'create']

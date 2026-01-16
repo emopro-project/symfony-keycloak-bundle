@@ -12,7 +12,8 @@ class AuthenticateUser
 
     public function __construct(
         private readonly TokenValidatorInterface $validator,
-        private TokenExchangerInterface $tokenExchangerInterface
+        private readonly TokenExchangerInterface $tokenExchangerInterface,
+        private readonly RateLimit $rateLimit
     ) {
         // Initialize any required dependencies here
     }
@@ -27,7 +28,7 @@ class AuthenticateUser
 
     public function exchangeCodeForToken(string $code): string
     {
-        
+        $this->rateLimit->execute();
         $data = $this->tokenExchangerInterface->exchange($code);
 
         if (!isset($data['access_token'])) {
@@ -40,6 +41,7 @@ class AuthenticateUser
 
     public function authenticateWithPassword(string $username, string $password): string
     {
+        $this->rateLimit->execute($username);
         $tokenData = $this->tokenExchangerInterface->exchangePasswordForToken($username, $password);
         return $tokenData['access_token'];
     }

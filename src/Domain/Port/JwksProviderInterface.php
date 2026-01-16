@@ -2,8 +2,6 @@
 
 namespace KeycloakAuthBundle\Domain\Port;
 
-use Lcobucci\JWT\Signer\Key\InMemory;
-
 interface JwksProviderInterface
 {
     public function getJwks(): object;
