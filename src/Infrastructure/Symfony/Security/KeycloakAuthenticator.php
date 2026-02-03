@@ -12,17 +12,24 @@ use Symfony\Component\Security\Http\Authenticator\AbstractAuthenticator;
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
 use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
 use KeycloakAuthBundle\Application\UseCase\AuthenticateUser;
+use KeycloakAuthBundle\Application\UseCase\RateLimit;
 use Symfony\Component\Security\Http\Authenticator\Passport\SelfValidatingPassport;
 use Symfony\Component\Security\Http\EntryPoint\AuthenticationEntryPointInterface;
 use KeycloakAuthBundle\Infrastructure\Keycloak\LoginUrlGenerator;
+use KeycloakAuthBundle\Infrastructure\Symfony\Event\AccesDeniedEvent;
+use KeycloakAuthBundle\Infrastructure\Symfony\Event\LoginValidateEvent;
+use KeycloakAuthBundle\Infrastructure\Symfony\Event\TokenValidEvent;
 use KeycloakAuthBundle\Infrastructure\Symfony\Models\SymfonyUser;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 class KeycloakAuthenticator extends AbstractAuthenticator implements AuthenticationEntryPointInterface
 {
 
     public function __construct(
         private readonly AuthenticateUser $authenticateUser,
-        private LoginUrlGenerator $loginUrlGenerator
+        private readonly LoginUrlGenerator $loginUrlGenerator,
+        private readonly RateLimit $rateLimit,
+        private EventDispatcherInterface $eventDispatcher
     ) {}
 
 
@@ -36,14 +43,13 @@ class KeycloakAuthenticator extends AbstractAuthenticator implements Authenticat
     public function authenticate(Request $request): Passport
     {
 
-    
+
         $session = $request->getSession();
         if ($session && $session->has('keycloak_access_token')) {
             $accessToken = $session->get('keycloak_access_token');
-
             $domainUser = $this->authenticateUser->execute($accessToken);
             $symfonyUser = new SymfonyUser($domainUser);
-
+            $this->rateLimit->execute($domainUser->getId());
             return new SelfValidatingPassport(
                 new UserBadge(
                     $symfonyUser->getUserIdentifier(),
@@ -52,7 +58,7 @@ class KeycloakAuthenticator extends AbstractAuthenticator implements Authenticat
             );
         }
 
-        
+
         if ($request->query->has('code')) {
             return $this->authenticateWithCode($request);
         }
@@ -71,11 +77,17 @@ class KeycloakAuthenticator extends AbstractAuthenticator implements Authenticat
         }
 
         $accessToken = $this->authenticateUser->exchangeCodeForToken($code);
-
         $domainUser = $this->authenticateUser->execute($accessToken);
-
+        $this->rateLimit->execute($domainUser->getId());
         $symfonyUser = new SymfonyUser($domainUser);
 
+        $this->eventDispatcher->dispatch(
+            new TokenValidEvent(
+                $symfonyUser->getUserIdentifier(),
+                $symfonyUser->getRoles()
+            ),
+            TokenValidEvent::class
+        );
         return new SelfValidatingPassport(
             new UserBadge(
                 $symfonyUser->getUserIdentifier(),
@@ -97,7 +109,16 @@ class KeycloakAuthenticator extends AbstractAuthenticator implements Authenticat
             throw $exception;
         }
 
+        $this->rateLimit->execute($domainUser->getId());
         $symfonyUser = new SymfonyUser($domainUser);
+
+        $this->eventDispatcher->dispatch(
+            new TokenValidEvent(
+                $symfonyUser->getUserIdentifier(),
+                $symfonyUser->getRoles()
+            ),
+            TokenValidEvent::class
+        );
         return new SelfValidatingPassport(
             new UserBadge(
                 $symfonyUser->getUserIdentifier(),
@@ -110,7 +131,7 @@ class KeycloakAuthenticator extends AbstractAuthenticator implements Authenticat
     public function supports(Request $request): bool
     {
 
-   
+
         $isLoginCheckRoute = $request->attributes->get('_route') === 'keycloak_login_check';
         $hasAuthHeader = $request->headers->has('Authorization');
 
@@ -125,6 +146,27 @@ class KeycloakAuthenticator extends AbstractAuthenticator implements Authenticat
         $data = [
             'message' => strtr($exception->getMessageKey(), $exception->getMessageData())
         ];
+
+        if(  Response::HTTP_UNAUTHORIZED )
+        {
+            $this->eventDispatcher->dispatch(
+            new AccesDeniedEvent(
+                userId: null,
+                ip: $request->getClientIp(),
+                reason: $exception->getMessageKey()
+            ),
+            AccesDeniedEvent::class
+        );
+        }else
+
+        $this->eventDispatcher->dispatch(
+            new LoginValidateEvent(
+                ip: $request->getClientIp(),
+                userId: null,
+                reason: $exception->getMessageKey()
+            ),
+            LoginValidateEvent::class
+        );
 
         return new JsonResponse($data, Response::HTTP_UNAUTHORIZED);
     }

@@ -10,8 +10,8 @@ final class RateLimit
         private readonly RateLimiterCheckerInterface $rateLimitChecker
     ) {}
 
-    public function execute(?string $username = null): void
+    public function execute(?string $id = null): void
     {
-        $this->rateLimitChecker->check($username);
+        $this->rateLimitChecker->check($id);
     }
 }

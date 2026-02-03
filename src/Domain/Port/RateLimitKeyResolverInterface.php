@@ -3,5 +3,5 @@ namespace KeycloakAuthBundle\Domain\Port;
 
 interface RateLimitKeyResolverInterface
 {
-    public function resolve(?string $username = null);
+    public function resolve(?string $id = null);
 }

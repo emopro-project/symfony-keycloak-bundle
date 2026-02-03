@@ -10,6 +10,7 @@ services:
       - "../../{DependencyInjection, Resources}"
       - "../../Domain/Model"
       - "../../Infrastructure/Symfony/Models"
+      - "../../Infrastructure/Symfony/Event"
 
   # Port → Adapter (hexagonal)
   KeycloakAuthBundle\Domain\Port\JwksProviderInterface:
@@ -69,41 +70,81 @@ services:
   KeycloakAuthBundle\Domain\Port\HealthCheckInterface:
     alias: KeycloakAuthBundle\Infrastructure\Keycloak\KeyCloackHealthChecker
 
-
   KeycloakAuthBundle\Infrastructure\Keycloak\Jwt\LcobucciJwtValidator:
     arguments:
-        $jwtConfig: '@Lcobucci\JWT\Configuration' # ou ton service Configuration
-        $jwksProvider: '@KeycloakAuthBundle\Infrastructure\Keycloak\JwksProvider'
-        $roleMapper  : '@KeycloakAuthBundle\Infrastructure\Keycloak\RoleMapper'
-        $issuer      : "%keycloak.issuer%"
+      $jwtConfig: '@Lcobucci\JWT\Configuration' # ou ton service Configuration
+      $jwksProvider: '@KeycloakAuthBundle\Infrastructure\Keycloak\JwksProvider'
+      $roleMapper: '@KeycloakAuthBundle\Infrastructure\Keycloak\RoleMapper'
+      $issuer: "%keycloak.issuer%"
 
   KeycloakAuthBundle\Domain\Port\RoleMapperInterface:
     alias: KeycloakAuthBundle\Infrastructure\Keycloak\RoleMapper
 
-
- # JWT and security authenticator
+  # JWT and security authenticator
   Lcobucci\JWT\Signer\Key\InMemory:
-    factory: ['Lcobucci\JWT\Signer\Key\InMemory', 'empty']
+    factory: ['Lcobucci\JWT\Signer\Key\InMemory', "empty"]
 
   Lcobucci\JWT\Signer\Rsa\Sha256:
     class: Lcobucci\JWT\Signer\Rsa\Sha256
- 
+
   Lcobucci\JWT\Configuration:
-    factory: ['Lcobucci\JWT\Configuration', 'forAsymmetricSigner']
+    factory: ['Lcobucci\JWT\Configuration', "forAsymmetricSigner"]
     arguments:
       - '@Lcobucci\JWT\Signer\Rsa\Sha256'
       - '@Lcobucci\JWT\Signer\Key\InMemory'
       - '@Lcobucci\JWT\Signer\Key\InMemory'
-  
-  # Resolver
-  KeycloakAuthBundle\Domain\Port\RateLimitKeyResolverInterface:
-    alias: KeycloakAuthBundle\Infrastructure\Symfony\RateLimiter\RateLimitHttpResolverAdapter 
-  
-  KeycloakAuthBundle\Domain\Port\RateLimiterCheckerInterface:
-    alias: KeycloakAuthBundle\Infrastructure\Symfony\RateLimiter\RateLimitAdpter
 
-  KeycloakAuthBundle\Infrastructure\Symfony\RateLimiter\RateLimitAdpter:
+  # Resolver
+  KeycloakAuthBundle\Infrastructure\Symfony\RateLimiter\RateLimitHttpResolverAdapter:
+    arguments:
+      $requestStack: "@request_stack"
+      $allowedPaths: "%keycloak.rate_limiter.allowed_paths%"
+      $clientId: "%keycloak.client_id%"
+      $strategies: "%keycloak.rate_limiter.strategies%"
+
+  KeycloakAuthBundle\Domain\Port\RateLimitKeyResolverInterface:
+    alias: KeycloakAuthBundle\Infrastructure\Symfony\RateLimiter\RateLimitHttpResolverAdapter
+
+  KeycloakAuthBundle\Domain\Port\RateLimiterCheckerInterface:
+    alias: KeycloakAuthBundle\Infrastructure\Symfony\RateLimiter\RateLimitAdapter
+
+  KeycloakAuthBundle\Infrastructure\Symfony\RateLimiter\RateLimitAdapter:
     arguments:
       $factory:
         class: Symfony\Component\RateLimiter\RateLimiterFactory
-        factory: ['Symfony\Component\RateLimiter\RateLimiterFactory', 'create']
+        factory: ['Symfony\Component\RateLimiter\RateLimiterFactory', "create"]
+
+  # prometheus metrics
+  KeycloakAuthBundle\Infrastructure\Monitoring\Storage\RedisStorage:
+    arguments:
+      $host: "%keycloak.prometheus.redis.host%"
+      $port: "%keycloak.prometheus.redis.port%"
+      $prefix: "%keycloak.prometheus.redis.prefix%"
+      $timeout: "%keycloak.prometheus.redis.timeout%"
+      $readTimeout: "%keycloak.prometheus.redis.read_timeout%"
+      $persistentConnections: "%keycloak.prometheus.redis.persistent_connections%"
+
+  KeycloakAuthBundle\Infrastructure\Monitoring\Storage\APCStorage: ~
+
+  KeycloakAuthBundle\Infrastructure\Monitoring\CollectorRegistryFactory: ~
+  keycloak.prometheus.registry:
+    class: Prometheus\CollectorRegistry
+    factory:
+      [
+        '@KeycloakAuthBundle\Infrastructure\Monitoring\CollectorRegistryFactory',
+        "create",
+      ]
+
+  Prometheus\CollectorRegistry:
+    alias: keycloak.prometheus.registry
+
+  KeycloakAuthBundle\Infrastructure\Monitoring\Metrics\PrometheusMetricFactory:
+    arguments:
+      $registry: "@keycloak.prometheus.registry"
+
+  KeycloakAuthBundle\Infrastructure\Monitoring\PrometheusCounter:
+    arguments:
+      $collector: '@KeycloakAuthBundle\Infrastructure\Monitoring\Metrics\PrometheusMetricFactory'
+
+  KeycloakAuthBundle\Domain\Port\MetricsRegistryInterface:
+    alias: KeycloakAuthBundle\Infrastructure\Monitoring\PrometheusCounter

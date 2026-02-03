@@ -2,3 +2,8 @@ keycloak_health:
   resource: '../../Infrastructure/Symfony/Controller/KeycloakHealthController.php'
   type: attribute
   condition: "%keycloak.health.enabled%"
+
+metric_health:
+  resource: '../../Infrastructure/Symfony/Controller/MetricsController.php'
+  type: attribute
+  condition: "%keycloak.metrics.enabled%"

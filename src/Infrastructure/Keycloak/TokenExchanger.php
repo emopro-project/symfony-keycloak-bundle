@@ -3,6 +3,7 @@
 namespace KeycloakAuthBundle\Infrastructure\Keycloak;
 
 use Exception;
+use KeycloakAuthBundle\Domain\Port\MetricsRegistryInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use KeycloakAuthBundle\Domain\Port\TokenExchangerInterface;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
@@ -10,11 +11,13 @@ use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface;
 
+
 final class TokenExchanger implements TokenExchangerInterface
 {
     public function __construct(
         private HttpClientInterface $client,
         private KeycloakEndpoints $keycloakEndPoints,
+        private readonly MetricsRegistryInterface $metricFactory,
         private string $clientId,
         private string $clientSecret,
         private string $redirectUri
@@ -23,6 +26,7 @@ final class TokenExchanger implements TokenExchangerInterface
     public function exchange(string $code): array
     {
         try {
+            $start = microtime(true);
             $response = $this->client->request('POST', $this->keycloakEndPoints->token(), [
                 'timeout' => 10,
                 'headers' => [
@@ -36,17 +40,29 @@ final class TokenExchanger implements TokenExchangerInterface
                     'redirect_uri' => $this->redirectUri,
                 ],
             ]);
-
+            $durationMs = (microtime(true) - $start) * 1000;
+            $this->metricFactory->observe([
+                'type' => 'histogram',
+                'name' => 'keycloak_client_credentials_token_request_duration_ms',
+                'help' => 'Duration of Keycloak client credentials token request in milliseconds',
+                'namespace' => 'keycloak',
+                'labels' => ['username'],
+                'labelValues' => ['token_exchange'],
+                'value' => $durationMs,
+            ], $durationMs, ['token_exchange']);
             return $response->toArray();
-        } catch (ClientExceptionInterface |
-                 ServerExceptionInterface |
-                 RedirectionExceptionInterface |
-                 TransportExceptionInterface $e) {
+        } catch (
+            ClientExceptionInterface |
+            ServerExceptionInterface |
+            RedirectionExceptionInterface |
+            TransportExceptionInterface $e
+        ) {
             // Récupère le corps de la réponse si disponible
             $content = method_exists($e, 'getResponse') && $e->getResponse()
                 ? $e->getResponse()->getContent(false)
                 : $e->getMessage();
-
+            header('Location: /', true, 302); // temporaire
+            exit;
             throw new \RuntimeException('Keycloak exchange error: ' . $content);
         } catch (Exception $e) {
             throw new \RuntimeException('Unexpected error: ' . $e->getMessage());
@@ -71,10 +87,12 @@ final class TokenExchanger implements TokenExchangerInterface
             ]);
 
             return $response->toArray();
-        } catch (ClientExceptionInterface |
-                 ServerExceptionInterface |
-                 RedirectionExceptionInterface |
-                 TransportExceptionInterface $e) {
+        } catch (
+            ClientExceptionInterface |
+            ServerExceptionInterface |
+            RedirectionExceptionInterface |
+            TransportExceptionInterface $e
+        ) {
             $content = method_exists($e, 'getResponse') && $e->getResponse()
                 ? $e->getResponse()->getContent(false)
                 : $e->getMessage();

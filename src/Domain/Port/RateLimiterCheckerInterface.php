@@ -9,5 +9,5 @@ interface RateLimiterCheckerInterface
      *
      * @throws \App\Domain\Exception\RateLimitExceededException
      */
-    public function check(?string $username): void;
+    public function check(?string $id): void;
 }

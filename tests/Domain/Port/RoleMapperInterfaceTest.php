@@ -13,7 +13,7 @@ class RoleMapperInterfaceTest extends TestCase
 
         $roleMapperInterfaceMoock = $this->createMock(RoleMapperInterface::class);
         $roleMapperInterfaceMoock->method('map')->willReturn(["Role_admin", "Role_manager"]);
-        $roles = $roleMapperInterfaceMoock->map(["admin", "manager"]);
+        $roles = $roleMapperInterfaceMoock->map(["admin", "manager"],[]);
         $this->assertSame($roles, ["Role_admin", "Role_manager"]);
         $this->assertIsArray($roles);
     }

@@ -6,10 +6,8 @@ use KeycloakAuthBundle\Application\UseCase\AuthenticateUser;
 use KeycloakAuthBundle\Application\UseCase\GetClientCredentialsToken as UseCaseGetClientCredentialsToken;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\Routing\Annotation\Route;
 use KeycloakAuthBundle\Domain\Port\HealthCheckInterface;
-
-
+use Symfony\Component\Routing\Attribute\Route;
 
 #[Route(path: '%keycloak.health.path%', name: 'keycloak_health', methods: ['GET'])]
 class KeycloakHealthController extends AbstractController
@@ -23,15 +21,12 @@ class KeycloakHealthController extends AbstractController
 
     public function __invoke(): JsonResponse
     {
+    
         $status = ($this->healthCheck->check());
-
         $token = $this->getClientCredential->execute();
-
         if ($token) {
             $user = $this->authenticateUser->execute($token);
         }
-
-        
 
         return new JsonResponse(
             [
