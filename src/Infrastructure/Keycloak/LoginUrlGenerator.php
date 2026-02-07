@@ -24,7 +24,7 @@ final class LoginUrlGenerator
 
         return sprintf(
             '%s/realms/%s/protocol/openid-connect/auth?%s',
-            rtrim("http://localhost:8083", '/'),
+            rtrim($this->baseUrl, '/'),
             $this->realm,
             $query
         );
