@@ -48,8 +48,9 @@ class KeycloakAuthenticator extends AbstractAuthenticator implements Authenticat
         if ($session && $session->has('keycloak_access_token')) {
             $accessToken = $session->get('keycloak_access_token');
             $domainUser = $this->authenticateUser->execute($accessToken);
-            $symfonyUser = new SymfonyUser($domainUser);
+            $symfonyUser = new SymfonyUser($domainUser, $accessToken);
             $this->rateLimit->execute($domainUser->getId());
+            $request->getSession()->set('keycloak_access_token', $accessToken);
             return new SelfValidatingPassport(
                 new UserBadge(
                     $symfonyUser->getUserIdentifier(),
@@ -79,7 +80,7 @@ class KeycloakAuthenticator extends AbstractAuthenticator implements Authenticat
         $accessToken = $this->authenticateUser->exchangeCodeForToken($code);
         $domainUser = $this->authenticateUser->execute($accessToken);
         $this->rateLimit->execute($domainUser->getId());
-        $symfonyUser = new SymfonyUser($domainUser);
+        $symfonyUser = new SymfonyUser($domainUser, $accessToken);
 
         $this->eventDispatcher->dispatch(
             new TokenValidEvent(
@@ -99,6 +100,7 @@ class KeycloakAuthenticator extends AbstractAuthenticator implements Authenticat
     public function authenticateWithBearerToken(Request $request): Passport
     {
         $token = $request->headers->get('Authorization');
+
         if (empty($token)) {
             throw new AuthenticationException("No Token provided");
         }
@@ -110,7 +112,7 @@ class KeycloakAuthenticator extends AbstractAuthenticator implements Authenticat
         }
 
         $this->rateLimit->execute($domainUser->getId());
-        $symfonyUser = new SymfonyUser($domainUser);
+        $symfonyUser = new SymfonyUser($domainUser, $token);
 
         $this->eventDispatcher->dispatch(
             new TokenValidEvent(

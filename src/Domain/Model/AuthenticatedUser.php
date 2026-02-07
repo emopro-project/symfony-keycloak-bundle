@@ -9,7 +9,8 @@ class AuthenticatedUser
         private string $id,
         private string $username,
         private array $roles,
-        private array $attributes = []
+        private array $attributes = [],
+        private ?string $accessToken
     ) {}
 
     public function getId(): string
@@ -34,12 +35,17 @@ class AuthenticatedUser
         return in_array($role, $this->roles, true);
     }
 
+    public function getAccessToken():string
+    {
+        return $this?->accessToken;
+    }
     public function toArray(): array
     {
         return [
             'id' => $this->id,
             'username' => $this->username,
             'roles' => $this->roles,
+            'accesToken' => $this->accessToken
         ];
     }
 }

@@ -8,7 +8,8 @@ use KeycloakAuthBundle\Domain\Model\AuthenticatedUser;
 final class SymfonyUser implements UserInterface
 {
     public function __construct(
-        private AuthenticatedUser $user
+        private AuthenticatedUser $user,
+        private string $accesToken
     ) {}
 
     public function getUserIdentifier(): string
@@ -30,4 +31,6 @@ final class SymfonyUser implements UserInterface
     {
         return $this->user;
     }
+
+    public function getAccessToken(): string { return $this->accesToken; }
 }

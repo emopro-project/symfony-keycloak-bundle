@@ -74,7 +74,7 @@ class FirebaseJwtValidator implements TokenValidatorInterface
             $realmRessourcesAccess = $decoded->resource_access->account ?? [];
             $realmAccessRoles      = $decoded->realm_access->roles ?? [];
             $roles = $this->roleMapper->map($realmRessourcesAccess, $realmAccessRoles);
-            return new AuthenticatedUser($id, $username, $roles);
+            return new AuthenticatedUser($id, $username, $roles );
         } catch (\Throwable $e) {
             throw new \RuntimeException('Erreur lors du mapping du JWT en utilisateur: ' . $e->getMessage(), 0, $e);
         }
