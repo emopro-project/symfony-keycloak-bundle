@@ -53,6 +53,7 @@ final class LcobucciJwtValidator implements TokenValidatorInterface
         return new AuthenticatedUser(
             id: $jwt->claims()->get('sub'),
             username: $userName,
+            accessToken:$token,
             roles: $roles,
             attributes: []
         );
