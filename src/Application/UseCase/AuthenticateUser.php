@@ -39,7 +39,10 @@ class AuthenticateUser
 
     public function exchangeCodeForToken(string $code): string
     {
+        
         $data = $this->tokenExchangerInterface->exchange($code);
+
+       
 
         if (!isset($data['access_token'])) {
             throw new AuthenticationException('Access token missing');

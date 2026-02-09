@@ -21,7 +21,7 @@ final class LoginUrlGenerator
             'response_type' => 'code',
             'scope'         => 'openid profile email',
         ]);
-
+        # rtrim("http://localhost:8080", '/'), en dev
         return sprintf(
             '%s/realms/%s/protocol/openid-connect/auth?%s',
             rtrim($this->baseUrl, '/'),

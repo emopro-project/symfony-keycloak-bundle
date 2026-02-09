@@ -2,7 +2,7 @@ services:
   _defaults:
     autowire: true
     autoconfigure: true
-    public: public
+    public: true
 
   KeycloakAuthBundle\:
     resource: "../../"
@@ -56,6 +56,7 @@ services:
       $clientId: "%keycloak.client_id%"
       $redirectUri: "%keycloak.redirect_uri%"
       $clientSecret: "%keycloak.client_secret%"
+      $logger: '@logger'
 
   KeycloakAuthBundle\Infrastructure\Keycloak\ClientCredentialsTokenProvider:
     arguments:

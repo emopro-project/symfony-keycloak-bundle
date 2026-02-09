@@ -35,14 +35,24 @@ class KeycloakAuthenticator extends AbstractAuthenticator implements Authenticat
 
     public function start(Request $request, ?AuthenticationException $authException = null): Response
     {
+        // Si c’est une API → 401 JSON
+        if (str_starts_with($request->getPathInfo(), '/api')) {
+            return new JsonResponse([
+                'message' => 'Authentication required'
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+
+        // Sinon → redirect Keycloak
         return new RedirectResponse(
             $this->loginUrlGenerator->generate()
         );
     }
 
+
     public function authenticate(Request $request): Passport
     {
 
+   
 
         $session = $request->getSession();
         if ($session && $session->has('keycloak_access_token')) {
@@ -60,12 +70,19 @@ class KeycloakAuthenticator extends AbstractAuthenticator implements Authenticat
         }
 
 
+        
+
         if ($request->query->has('code')) {
             return $this->authenticateWithCode($request);
         }
 
+         dd( $request );
 
-        return $this->authenticateWithBearerToken($request);
+        if ($request->headers->has('Authorization')) {
+            return $this->authenticateWithBearerToken($request);
+        }
+
+        throw new AuthenticationException("No authentication method found");
     }
 
 
@@ -77,7 +94,10 @@ class KeycloakAuthenticator extends AbstractAuthenticator implements Authenticat
             throw new AuthenticationException('Authorization code missing');
         }
 
+       
+
         $accessToken = $this->authenticateUser->exchangeCodeForToken($code);
+        $request->getSession()->set('keycloak_access_token', $accessToken); 
         $domainUser = $this->authenticateUser->execute($accessToken);
         $this->rateLimit->execute($domainUser->getId());
         $symfonyUser = new SymfonyUser($domainUser, $accessToken);
@@ -130,15 +150,19 @@ class KeycloakAuthenticator extends AbstractAuthenticator implements Authenticat
     }
 
 
+
+
     public function supports(Request $request): bool
     {
+         $session = $request->getSession();
+        return
+        $request->attributes->get('_route') === 'keycloak_login_check'
+        || $request->headers->has('Authorization')
+        || ($session && $session->has('keycloak_access_token'));
 
-
-        $isLoginCheckRoute = $request->attributes->get('_route') === 'keycloak_login_check';
-        $hasAuthHeader = $request->headers->has('Authorization');
-
-        return $isLoginCheckRoute || $hasAuthHeader;
     }
+
+
 
 
 
@@ -149,26 +173,25 @@ class KeycloakAuthenticator extends AbstractAuthenticator implements Authenticat
             'message' => strtr($exception->getMessageKey(), $exception->getMessageData())
         ];
 
-        if(  Response::HTTP_UNAUTHORIZED )
-        {
+        if (Response::HTTP_UNAUTHORIZED) {
             $this->eventDispatcher->dispatch(
-            new AccesDeniedEvent(
-                userId: null,
-                ip: $request->getClientIp(),
-                reason: $exception->getMessageKey()
-            ),
-            AccesDeniedEvent::class
-        );
-        }else
+                new AccesDeniedEvent(
+                    userId: null,
+                    ip: $request->getClientIp(),
+                    reason: $exception->getMessageKey()
+                ),
+                AccesDeniedEvent::class
+            );
+        } else
 
-        $this->eventDispatcher->dispatch(
-            new LoginValidateEvent(
-                ip: $request->getClientIp(),
-                userId: null,
-                reason: $exception->getMessageKey()
-            ),
-            LoginValidateEvent::class
-        );
+            $this->eventDispatcher->dispatch(
+                new LoginValidateEvent(
+                    ip: $request->getClientIp(),
+                    userId: null,
+                    reason: $exception->getMessageKey()
+                ),
+                LoginValidateEvent::class
+            );
 
         return new JsonResponse($data, Response::HTTP_UNAUTHORIZED);
     }

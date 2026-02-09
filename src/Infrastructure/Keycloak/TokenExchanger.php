@@ -6,6 +6,7 @@ use Exception;
 use KeycloakAuthBundle\Domain\Port\MetricsRegistryInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use KeycloakAuthBundle\Domain\Port\TokenExchangerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface;
@@ -18,6 +19,7 @@ final class TokenExchanger implements TokenExchangerInterface
         private HttpClientInterface $client,
         private KeycloakEndpoints $keycloakEndPoints,
         private readonly MetricsRegistryInterface $metricFactory,
+        private LoggerInterface $logger,
         private string $clientId,
         private string $clientSecret,
         private string $redirectUri
@@ -25,6 +27,8 @@ final class TokenExchanger implements TokenExchangerInterface
 
     public function exchange(string $code): array
     {
+
+
         try {
             $start = microtime(true);
             $response = $this->client->request('POST', $this->keycloakEndPoints->token(), [
@@ -50,7 +54,7 @@ final class TokenExchanger implements TokenExchangerInterface
                 'labelValues' => ['token_exchange'],
                 'value' => $durationMs,
             ], $durationMs, ['token_exchange']);
-            return $response->toArray();
+            return $response->toArray() ;
         } catch (
             ClientExceptionInterface |
             ServerExceptionInterface |
@@ -61,13 +65,19 @@ final class TokenExchanger implements TokenExchangerInterface
             $content = method_exists($e, 'getResponse') && $e->getResponse()
                 ? $e->getResponse()->getContent(false)
                 : $e->getMessage();
-            header('Location: /', true, 302); // temporaire
-            exit;
-            throw new \RuntimeException('Keycloak exchange error: ' . $content);
+            // Symfony gère l'erreur via AuthenticationException
+            $this->logger?->error('Keycloak token exchange failed', ['content' => $content]);
+            $this->logger?->warning('Keycloak token exchange failed', ['content' => $content]);
+            throw new \Symfony\Component\Security\Core\Exception\AuthenticationException(
+                'Keycloak exchange error: ' . $content
+            );
         } catch (Exception $e) {
-            throw new \RuntimeException('Unexpected error: ' . $e->getMessage());
+            $this->logger?->error('Keycloak token exchange failed', ['content' => $e->getMessage()]);
+            throw new \Symfony\Component\Security\Core\Exception\AuthenticationException(
+                'Keycloak exchange error: ' .  $e->getMessage()
+            );
         }
-    }
+    } 
 
     public function exchangePasswordForToken(string $username, string $password): array
     {

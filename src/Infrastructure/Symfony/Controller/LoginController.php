@@ -10,7 +10,7 @@ class LoginController extends AbstractController
 {
     #[Route(
         path: '/login/check',
-        name: 'keycloak_login_check_2',
+        name: 'keycloak_login_check',
         methods: ['GET']
     )]
 
