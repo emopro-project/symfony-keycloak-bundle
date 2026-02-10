@@ -52,7 +52,6 @@ class KeycloakAuthenticator extends AbstractAuthenticator implements Authenticat
     public function authenticate(Request $request): Passport
     {
 
-   
 
         $session = $request->getSession();
         if ($session && $session->has('keycloak_access_token')) {
@@ -70,13 +69,9 @@ class KeycloakAuthenticator extends AbstractAuthenticator implements Authenticat
         }
 
 
-        
-
         if ($request->query->has('code')) {
             return $this->authenticateWithCode($request);
         }
-
-         dd( $request );
 
         if ($request->headers->has('Authorization')) {
             return $this->authenticateWithBearerToken($request);
@@ -94,13 +89,17 @@ class KeycloakAuthenticator extends AbstractAuthenticator implements Authenticat
             throw new AuthenticationException('Authorization code missing');
         }
 
-       
 
         $accessToken = $this->authenticateUser->exchangeCodeForToken($code);
-        $request->getSession()->set('keycloak_access_token', $accessToken); 
+        $request->getSession()->set('keycloak_access_token', $accessToken);
+
+
+
         $domainUser = $this->authenticateUser->execute($accessToken);
         $this->rateLimit->execute($domainUser->getId());
         $symfonyUser = new SymfonyUser($domainUser, $accessToken);
+
+
 
         $this->eventDispatcher->dispatch(
             new TokenValidEvent(
@@ -154,17 +153,10 @@ class KeycloakAuthenticator extends AbstractAuthenticator implements Authenticat
 
     public function supports(Request $request): bool
     {
-         $session = $request->getSession();
         return
-        $request->attributes->get('_route') === 'keycloak_login_check'
-        || $request->headers->has('Authorization')
-        || ($session && $session->has('keycloak_access_token'));
-
+            $request->attributes->get('_route') === 'keycloak_login_check'
+            || $request->headers->has('Authorization');
     }
-
-
-
-
 
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception): ?Response
     {

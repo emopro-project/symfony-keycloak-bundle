@@ -68,9 +68,8 @@ final class TokenExchanger implements TokenExchangerInterface
             // Symfony gère l'erreur via AuthenticationException
             $this->logger?->error('Keycloak token exchange failed', ['content' => $content]);
             $this->logger?->warning('Keycloak token exchange failed', ['content' => $content]);
-            throw new \Symfony\Component\Security\Core\Exception\AuthenticationException(
-                'Keycloak exchange error: ' . $content
-            );
+            header("Location: /");
+            die();
         } catch (Exception $e) {
             $this->logger?->error('Keycloak token exchange failed', ['content' => $e->getMessage()]);
             throw new \Symfony\Component\Security\Core\Exception\AuthenticationException(
