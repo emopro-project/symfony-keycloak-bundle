@@ -20,6 +20,7 @@ use KeycloakAuthBundle\Infrastructure\Symfony\Event\AccesDeniedEvent;
 use KeycloakAuthBundle\Infrastructure\Symfony\Event\LoginValidateEvent;
 use KeycloakAuthBundle\Infrastructure\Symfony\Event\TokenValidEvent;
 use KeycloakAuthBundle\Infrastructure\Symfony\Models\SymfonyUser;
+use Psr\Log\LoggerInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 class KeycloakAuthenticator extends AbstractAuthenticator implements AuthenticationEntryPointInterface
@@ -29,7 +30,8 @@ class KeycloakAuthenticator extends AbstractAuthenticator implements Authenticat
         private readonly AuthenticateUser $authenticateUser,
         private readonly LoginUrlGenerator $loginUrlGenerator,
         private readonly RateLimit $rateLimit,
-        private EventDispatcherInterface $eventDispatcher
+        private EventDispatcherInterface $eventDispatcher,
+        private LoggerInterface $logger
     ) {}
 
 
@@ -118,7 +120,14 @@ class KeycloakAuthenticator extends AbstractAuthenticator implements Authenticat
 
     public function authenticateWithBearerToken(Request $request): Passport
     {
-        $token = $request->headers->get('Authorization');
+        $authHeader = $request->headers->get('Authorization');
+
+
+        if (str_starts_with($authHeader, 'Bearer ')) {
+            $token = substr($authHeader, 7);
+        } else {
+            $token = $authHeader;
+        }
 
         if (empty($token)) {
             throw new AuthenticationException("No Token provided");
@@ -126,7 +135,9 @@ class KeycloakAuthenticator extends AbstractAuthenticator implements Authenticat
 
         try {
             $domainUser = $this->authenticateUser->execute($token);
+            $this->logger->info("Authentification successfully...");
         } catch (AuthenticationException $exception) {
+            $this->logger->warning("Authentification Error", ["error" => $exception->getMessage()]);
             throw $exception;
         }
 
